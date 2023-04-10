@@ -7,7 +7,7 @@ hub:
           # See: https://github.com/jupyterhub/jupyterhub/issues/2390 for related details
           def _options_form_default(self):
             rendered_form = super()._options_form_default()
-            default_env = "YOUHRNAME=%s\n" % self.user.name
+            default_env = "YOURNAME=%s\n" % self.user.name
             return """
               {rendered_form}
               <div class="form-group">
