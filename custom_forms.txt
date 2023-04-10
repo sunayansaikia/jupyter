@@ -63,3 +63,121 @@ proxy:
     nodePorts:
       http: 31677
       https: 31678
+      
+---
+
+# To adjust the spawn options presented to the user, we must create a custom
+# options_form function, and this example demonstrates how!
+#
+#
+#
+# profile_list (KubeSpawner class) can be configured as a convenience to
+# generate set HTML for the options_form configuration (Spawner class).
+#
+# If options_form is set (or indirectly set through profile_list), it is the
+# HTML that users are presented with when users have signed in and want to start
+# a server.
+#
+# While options_form is allowed to be a HTML string, it can also be a callable
+# function, that when called generates HTML. If a callable function return a
+# falsy value, no form will be rendered.
+#
+# In this custom options_form function, we will make a decision based on user
+# information, update profile_list, and rely on the profile_list logic to render
+# the HTML for us.
+#
+async def custom_options_form(spawner):
+    # See the pre_spawn_hook example for more ways to get information about the
+    # user
+    auth_state = await spawner.user.get_auth_state()
+    user_details = auth_state["oauth_user"]
+    gpu_access = user_details.get("gpu_access", False)
+
+    # Declare the common profile list for all users
+    spawner.profile_list = [
+        {
+            'display_name': 'CPU server',
+            'slug': 'cpu',
+            'default': True,
+        },
+    ]
+
+    # Dynamically update profile_list based on user
+    if gpu_access:
+        spawner.log.info(f"GPU access options added for {username}.")
+        spawner.profile_list.extend(
+            [
+                {
+                    'display_name': 'GPU server',
+                    'slug': 'gpu',
+                    'kubespawner_override': {
+                        'image': 'training/datascience:my_tag',
+                    },
+                },
+            ]
+        )
+
+    # Let KubeSpawner inspect profile_list and decide what to return, it
+    # will return a falsy blank string if there is no profile_list,
+    # which makes no options form be presented.
+    #
+    # ref: https://github.com/jupyterhub/kubespawner/blob/37a80abb0a6c826e5c118a068fa1cf2725738038/kubespawner/spawner.py#L1885-L1935
+    return spawner._options_form_default()
+
+# Don't forget to ask KubeSpawner to make use of this custom hook
+c.KubeSpawner.options_form = custom_options_form
+
+---
+
+
+async def custom_pre_spawn_hook(spawner):
+    # Here are examples of information available to us:
+    #
+    # 1. Info about the user from the JupyterHub User object
+    #
+    username = spawner.user.name
+    # ... more User object properties are available, for more information, see:
+    # https://jupyterhub.readthedocs.io/en/latest/_static/rest-api/index.html#/definitions/User
+    
+    # 2. Info about the user's profile if profile_list was configured
+    #
+    #    This value will be either the "slug" or "display_name". In our example,
+    #    "cpu" or "gpu".
+    #
+    chosen_profile = spawner.user_options.get("profile", "")
+
+    # 3. Info about the user from the user's authentication state
+    #
+    #    The authentication state must be enabled for this to be accessible, so
+    #    set hub.config.Authenticator.enable_auth_state to true.
+    #
+    #    Depending on what authenticator you use and how it is configured, you
+    #    can get access to different things. By setting an OAuthenticator based
+    #    class "scope" to include "email", you should have email "claim"
+    #    available. You request scopes, and can be returned claims.
+    #
+    auth_state = await spawner.user.get_auth_state()
+    user_details = auth_state["oauth_user"]
+    gpu_access = user_details.get("gpu_access", False)
+
+    # Here are examples on how to update settings based on user information:
+    #
+    # 1. Setting a label
+    #
+    #    With .update on this dict, we don't remove all other extra_labels
+    #
+    spawner.extra_labels.update(
+        {
+            "sundellopensource.se/gpu-access": str.lower(str(gpu_access)),
+        }
+    )
+
+    # 2. Add an init_container
+    #
+    #    With .insert on this list, we don't remove all other init_containers
+    #
+    init_container_for_gpu_users = {} # FIXME: not a complete example
+    spawner.init_containers.insert(0, init_container_for_gpu_users)
+
+# Don't forget to ask KubeSpawner to make use of this custom hook
+c.KubeSpawner.pre_spawn_hook = custom_pre_spawn_hook
