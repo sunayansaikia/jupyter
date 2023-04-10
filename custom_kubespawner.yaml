@@ -1,0 +1,69 @@
+hub:
+  extraConfig:
+    spawner: |
+      from kubespawner import KubeSpawner
+      class CustomKubeSpawner(KubeSpawner):
+          # Override the options_form presented for users if they have gpu_access.
+          # See: https://github.com/jupyterhub/jupyterhub/issues/2390 for related details
+          def _options_form_default(self):
+            rendered_form = super()._options_form_default()
+            default_env = "YOUHRNAME=%s\n" % self.user.name
+            return """
+              {rendered_form}
+              <div class="form-group">
+                <label for="env">Environment variables (one per line)</label>
+                <textarea class="form-control" name="env">{env}</textarea>
+             </div>
+            """.format(
+              rendered_form=rendered_form,
+              env=default_env
+            )
+
+          def get_env(self):
+              env = super().get_env()
+              if self.user_options.get('env'):
+                env.update(self.user_options['env'])
+              return env
+
+          def _options_from_form(self, formdata):
+            options = super()._options_from_form(formdata)
+            options['env'] = env = {}
+
+            env_lines = formdata.get('env', [''])
+            for line in env_lines[0].splitlines():
+              if line:
+                key, value = line.split('=', 1)
+                env[key.strip()] = value.strip()
+
+            return options
+      c.JupyterHub.spawner_class = CustomKubeSpawner
+
+singleuser:
+  storage:
+    type: none
+  image:
+    name: sunayansaikia/jupyter-all-spark-notebook
+    tag: "spark-3.2.1e5"
+  defaultUrl: /lab
+  allowPrivilegeEscalation: true
+  uid: 0
+  cmd: start-singleuser.sh
+  extraEnv:
+    GRANT_SUDO: "yes"
+    NOTEBOOK_ARGS: "--allow-root"
+  profileList:
+    - display_name: "Personal, 4 CPU cores & 26GB RAM, 1 NVIDIA Tesla K80 GPU"
+      description: "Your code will run a personal machine with a GPU."
+      dafault: True
+      kubespawner_override:
+        image: sunayansaikia/jupyter-all-spark-notebook:spark-3.2.1e5
+         #environment:
+         #  ENV_VAR_1: '${env_var_1}'
+         #cmd: 'start-singleuser.sh'
+         #args: ['--allow-root']
+proxy:
+  service:
+    type: NodePort
+    nodePorts:
+      http: 31677
+      https: 31678
