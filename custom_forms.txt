@@ -1,0 +1,65 @@
+https://dev.to/li_chastina/auto-refresh-aws-tokens-using-iam-role-and-boto3-2cjf
+
+Jupyter Forms:
+Working:  https://discourse.jupyter.org/t/tailoring-spawn-options-and-server-configuration-to-certain-users/8449
+Complemeted with: https://github.com/jupyterhub/jupyterhub/blob/main/examples/spawn-form/jupyterhub_config.py
+Extra reads:
+https://z2jh.jupyter.org/en/latest/jupyterhub/customizing/user-environment.html#user-dependent-profile-options
+https://jupyterhub-kubespawner.readthedocs.io/en/latest/spawner.html#kubespawner.KubeSpawner.privileged
+
+debug:
+  enabled: true
+
+hub:
+  extraConfig:
+    k_options_form: |
+      c.KubeSpawner.options_form = """
+        <div class="form-group">
+            <label for="env">Environment variables (one per line)</label>
+            <textarea class="form-control" name="env">{env}</textarea>
+        </div>
+      """
+    k_options_form_from: |
+      async def custom_options_form_from(formdata):
+        options = {}
+        options['env'] = env = {}
+        env_lines = formdata.get('env', [''])
+        for line in env_lines[0].splitlines():
+          if line:
+            key, value = line.split('=', 1)
+            env[key.strip()] = value.strip()
+      c.KubeSpawner.options_from_form = custom_options_form_from
+    k_pre_spawn_hook: |
+      async def custom_pre_spawn_hook(spawner):
+          env = spawner.user_options['env']
+          spawner.environment.update(env)
+      c.KubeSpawner.pre_spawn_hook = custom_pre_spawn_hook
+
+singleuser:
+  storage:
+    type: none
+  image:
+    name: sunayansaikia/jupyter-all-spark-notebook
+    tag: "spark-3.2.1e5"
+  defaultUrl: /lab
+  allowPrivilegeEscalation: true
+  uid: 0
+  cmd: start-singleuser.sh
+  extraEnv:
+    GRANT_SUDO: "yes"
+    NOTEBOOK_ARGS: "--allow-root"
+  # profileList:
+  #  - display_name: "Personal, 4 CPU cores & 26GB RAM, 1 NVIDIA Tesla K80 GPU"
+  #    description: "Your code will run a personal machine with a GPU."
+  #    dafault: True
+      # kubespawner_override:
+         #environment:
+         #  ENV_VAR_1: '${env_var_1}'
+         #cmd: 'start-singleuser.sh'
+         #args: ['--allow-root']
+proxy:
+  service:
+    type: NodePort
+    nodePorts:
+      http: 31677
+      https: 31678
