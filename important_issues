@@ -8,3 +8,6 @@ https://github.com/jupyterlab/jupyterlab/issues/6248
 
 Notebook diff UI unavailable
 https://github.com/jupyter/nbdime/issues/660
+
+Reporting Disk Usage
+https://github.com/jupyter-server/jupyter-resource-usage/issues/186
