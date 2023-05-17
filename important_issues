@@ -12,5 +12,6 @@ https://github.com/jupyter/nbdime/issues/660
 Reporting Disk Usage
 https://github.com/jupyter-server/jupyter-resource-usage/issues/186
 
-Save hook
+Save hooks
+https://jupyter-notebook.readthedocs.io/en/stable/extending/savehooks.html
 https://stackoverflow.com/questions/73470409/jupyter-save-hook-not-working-after-reinstalling-pythonpyenv
