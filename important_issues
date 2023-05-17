@@ -1,0 +1,3 @@
+I would add that we also have this use case where we want to pre install a set of extensions for users but then allow them to add their own. 
+The user accounts do not have sudo access (we are also using docker).
+https://github.com/jupyterlab/jupyterlab/issues/4064
