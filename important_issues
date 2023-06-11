@@ -20,6 +20,7 @@ Bad UX errors:
 https://github.com/jupyterlab/jupyterlab/issues/3964
 
 https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+altertative suggestion: Patch -- https://stackoverflow.com/questions/65202615/proper-use-of-role-rules-resourcenames-for-creating-pods-with-limited-access-to
 Note: You cannot restrict create or deletecollection requests by their resource name.
 For create, this limitation is because the name of the new object may not be known at authorization time.
 If you restrict list or watch by resourceName, 
