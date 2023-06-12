@@ -1,0 +1,72 @@
+hub:
+  extraConfig:
+    pre-spawn-hook: |
+      from kubernetes import config, client
+      def service_account_user_lab(spawner):
+         username = spawner.user.name
+
+         # Load the in-cluster configuration
+         config.load_incluster_config()
+
+         # Create the Kubernetes API client
+         api_client = client.ApiClient()
+         # Create an instance of the CoreV1Api using the custom ApiClient
+         api = client.CoreV1Api(api_client)
+         rbac_api = client.RbacAuthorizationV1Api()
+          
+         # Define the service account name based on the user's name or any other identifier
+         service_account_name = f"{spawner.pod_name}-sa"
+    
+         # Define the role and role binding names based on the service account
+         role_name = f"{spawner.pod_name}-role"
+         role_binding_name = f"{spawner.pod_name}-rolebinding" 
+
+         # Setting the current namespace
+         namespace = spawner.namespace
+         
+         # Create the service account
+         body = client.V1ServiceAccount(metadata=client.V1ObjectMeta(name=service_account_name))
+         try:
+             api.create_namespaced_service_account(namespace=namespace, body=body)
+         except Exception as e:
+             print(f"Failed to create service account: {e}")
+
+         # Create the role
+         role_rules = [
+           client.V1PolicyRule(
+               api_groups=[""],
+               resources=["secrets"],
+               resource_names=[f"{spawner.pod_name}-keytab"],
+               verbs=["get", "watch", "list", "patch", "update"]
+           )
+         ]
+         role_body = client.V1Role(
+         metadata=client.V1ObjectMeta(name=role_name),
+             rules=role_rules
+         )
+         try:
+             rbac_api.create_namespaced_role(namespace=namespace, body=role_body)
+         except Exception as e:
+             print(f"Failed to create role: {e}")
+       
+         # Create the role binding
+         role_binding_body = client.V1RoleBinding(
+             metadata=client.V1ObjectMeta(name=role_binding_name),
+             subjects=[
+                client.V1Subject(
+                    kind="ServiceAccount",
+                    name=service_account_name,
+                    namespace=namespace
+                )
+             ],
+             role_ref=client.V1RoleRef(
+                 kind="Role",
+                 name=role_name,
+                 api_group="rbac.authorization.k8s.io"
+             )
+         )
+         try:
+             rbac_api.create_namespaced_role_binding(namespace=namespace, body=role_binding_body)
+         except Exception as e:
+             print(f"Failed to create role binding: {e}")   
+      c.Spawner.pre_spawn_hook = service_account_user_lab
