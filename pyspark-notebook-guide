@@ -38,3 +38,6 @@ df = spark.createDataFrame(data).toDF(*columns)
 # Print DataFrame
 df.show()
 
+# Print spark ui url
+spark
+
