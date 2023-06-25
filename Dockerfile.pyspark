@@ -76,7 +76,7 @@ WORKDIR "${HOME}"
 EXPOSE 4040
 
 USER root
-RUN pip install jupyterlab-code-snippets
+pip install jupyterlab-git==0.41.0 jupyterlab-code-snippets==2.2.1 jupyter-resource-usage==0.7.2 jupyter-archive==3.3.4
 COPY extensions /tmp/extensions
 RUN pip install /tmp/extensions/jupyterlab_kerberos_utils-0.1.0-py3-none-any.whl /tmp/extensions/jupyterlab_disk_usage-0.1.0-py3-none-any.whl /tmp/extensions/jupyterlab_spark_helper-0.1.0-py3-none-any.whl && jupyter server extension enable jupyterlab_kerberos_utils && jupyter server extension enable jupyterlab_disk_usage && jupyter server extension enable jupyterlab_spark_helper
 USER ${NB_UID}
