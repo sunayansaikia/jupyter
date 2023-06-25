@@ -77,4 +77,6 @@ EXPOSE 4040
 
 USER root
 RUN pip install jupyterlab-code-snippets
+COPY extensions /tmp/extensions
+RUN pip install /tmp/extensions/jupyterlab_kerberos_utils-0.1.0-py3-none-any.whl /tmp/extensions/jupyterlab_disk_usage-0.1.0-py3-none-any.whl /tmp/extensions/jupyterlab_spark_helper-0.1.0-py3-none-any.whl && jupyter server extension enable jupyterlab_kerberos_utils && jupyter server extension enable jupyterlab_disk_usage && jupyter server extension enable jupyterlab_spark_helper
 USER ${NB_UID}
