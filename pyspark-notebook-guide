@@ -1,0 +1,40 @@
+Setup sample jupyterlab notebook.
+
+1. Download spark tar spark-3.2.1-bin-hadoop3.2.tgz and put to to where the extension home is
+2. sudo apt-get install openjdk-11-jdk
+3. pip install findspark
+
+Add in ~/.bashrc:
+
+export SPARK_HOME=/home/user/jupyter/jupyter_spark_helper/spark/spark-3.2.1-bin-hadoop3.2
+export PATH=$SPARK_HOME/bin:$PATH
+export PYSPARK_PYTHON=/home/user/miniconda3/bin/python3
+
+In the notebook type:
+#Note export does not work and we will have to reply on os.environ[]
+#!export SPARK_HOME=/home/user/jupyter/jupyter_spark_helper/spark/spark-3.2.1-bin-hadoop3.2
+#export PATH=$SPARK_HOME/bin:$PATH
+
+import os
+os.environ["SPARK_HOME"]="/home/user/jupyter/jupyter_spark_helper/spark/spark-3.2.1-bin-hadoop3.2"
+import findspark
+findspark.init()
+
+# Import PySpark
+from pyspark.sql import SparkSession
+
+#Create SparkSession
+spark = SparkSession.builder.appName('SparkByExamples.com').getOrCreate()
+
+# Data
+data = [("Java", "20000"), ("Python", "100000"), ("Scala", "3000")]
+
+# Columns
+columns = ["language","users_count"]
+
+# Create DataFrame
+df = spark.createDataFrame(data).toDF(*columns)
+
+# Print DataFrame
+df.show()
+
