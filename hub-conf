@@ -99,3 +99,34 @@ try:
 
 except ApiException as e:
     print(f"Exception when creating service: {e}")
+
+---
+body = client.V1Service(
+
+        api_version="v1",
+
+        kind="Service",
+
+        metadata=client.V1ObjectMeta(
+
+            name="redis-test-svc"
+
+        ),
+
+        spec=client.V1ServiceSpec(
+
+            selector={"app": "redis"},
+
+            cluster_ip="None",
+
+            type="ClusterIP",
+
+            ports=[client.V1ServicePort(
+
+                port=6379,
+
+                target_port=6379
+
+            )]
+
+        )
