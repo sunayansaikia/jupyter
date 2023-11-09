@@ -70,3 +70,32 @@ hub:
          except Exception as e:
              print(f"Failed to create role binding: {e}")   
       c.Spawner.pre_spawn_hook = service_account_user_lab
+
+---
+
+// service generation code
+# Define the service configuration
+service_config = {
+    "apiVersion": "v1",
+    "kind": "Service",
+    "metadata": {"name": "my-service"},
+    "spec": {
+        "selector": {"app": "my-app"},
+        "ports": [{"protocol": "TCP", "port": 80, "targetPort": 80}],
+        "type": "LoadBalancer"
+    }
+}
+
+# Create a Kubernetes API client
+api_instance = client.CoreV1Api()
+
+try:
+    # Create the service
+    api_instance.create_namespaced_service(
+        body=service_config, namespace="default"
+    )
+
+    print("Service created successfully!")
+
+except ApiException as e:
+    print(f"Exception when creating service: {e}")
