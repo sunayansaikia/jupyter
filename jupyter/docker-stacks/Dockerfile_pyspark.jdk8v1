@@ -19,7 +19,7 @@ ARG spark_version="3.2.1"
 ARG hadoop_version="3.2"
 ARG scala_version
 #ARG spark_checksum="67bc912e9192ef2159540cb480820e5466dfd91e907c97c5a4787587e3020be042b76c40c51854f2a5dbeb8c3775fe12d9021c1200c4704463ec644132243a69"
-ARG openjdk_version="11"
+ARG openjdk_version="8"
 
 ENV APACHE_SPARK_VERSION="${spark_version}" \
     HADOOP_VERSION="${hadoop_version}"
@@ -76,7 +76,22 @@ WORKDIR "${HOME}"
 EXPOSE 4040
 
 USER root
-pip install jupyterlab-git==0.41.0 jupyterlab-code-snippets==2.2.1 jupyter-resource-usage==0.7.2 jupyter-archive==3.3.4
+RUN pip install jupyterlab-git==0.41.0 jupyterlab-code-snippets==2.2.1 jupyter-resource-usage==0.7.2 jupyter-archive==3.3.4 jupyterlab_templates && jupyter nbextension enable --py --sys-prefix widgetsnbextension && jupyter labextension install "@jupyter-widgets/jupyterlab-manager" && jupyter labextension install jupyterlab_templates && jupyter server extension enable --py jupyterlab_templates
 COPY extensions /tmp/extensions
-RUN pip install /tmp/extensions/jupyterlab_kerberos_utils-0.1.0-py3-none-any.whl /tmp/extensions/jupyterlab_disk_usage-0.1.0-py3-none-any.whl /tmp/extensions/jupyterlab_spark_helper-0.1.0-py3-none-any.whl && jupyter server extension enable jupyterlab_kerberos_utils && jupyter server extension enable jupyterlab_disk_usage && jupyter server extension enable jupyterlab_spark_helper
+RUN pip install /tmp/extensions/jupyterlab_kerberos_utils-0.1.0-py3-none-any.whl /tmp/extensions/jupyterlab_disk_usage-0.1.0-py3-none-any.whl /tmp/extensions/jupyterlab_spark_helper-0.1.0-py3-none-any.whl /tmp/extensions/jupyterlab_custom_theme-0.1.0-py3-none-any.whl /tmp/extensions/jupyterlab_keyvalue_store-0.1.0-py3-none-any.whl && cd /tmp/extensions/sparkmagic && pip install -e hdijupyterutils && pip install -e autovizwidget && pip install -e sparkmagic && pip install -e . && cd - && jupyter server extension enable jupyterlab_kerberos_utils && jupyter server extension enable jupyterlab_disk_usage && jupyter server extension enable jupyterlab_spark_helper && jupyter server extension enable jupyterlab_custom_theme &&  jupyter server extension enable jupyterlab_keyvalue_store && jupyter nbextension enable --py --sys-prefix widgetsnbextension && jupyter labextension install "@jupyter-widgets/jupyterlab-manager" && jupyter serverextension enable --py sparkmagic && rm -rf /tmp/extensions
+
+RUN  mkdir -p /usr/local/spark/extra_jars
+COPY hadoop_tools-1.0.3.jar /usr/local/spark/extra_jars/
+ARG CACHEBUST 
+RUN apt-get update --yes && \
+    apt-get upgrade --yes && \
+    apt-get install --yes --no-install-recommends \
+    curl \
+    dnsutils \
+    net-tools && \
+    apt install software-properties-common --yes && \
+    add-apt-repository ppa:git-core/ppa --yes && \
+    apt install git --yes && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 USER ${NB_UID}
