@@ -1,0 +1,17 @@
+FROM continuumio/miniconda3:latest
+#USER root
+#ARG user=aiuser
+#ARG group=aiuser
+#ARG uid=1000
+#ARG gid=1000
+#RUN groupadd -g ${gid} ${group} && useradd -m -u ${uid} -g ${group} -s /bin/sh ${user}
+COPY text-generation-webui /text-generation-webui
+#COPY models/mistral-7b-openorca.Q4_0.gguf /text-generation-webui/models/
+RUN chmod -R +x /text-generation-webui
+WORKDIR /text-generation-webui
+RUN pip install -r requirements.txt
+RUN pip install tiktoken sentence_transformers SpeechRecognition sse_starlette
+#RUN chown aiuser:aiuser -R /text-generation-webui && \
+#    chmod -R +x /text-generation-webui
+#USER aiuser
+CMD ["python","server.py","--api","--listen","--cpu"]
