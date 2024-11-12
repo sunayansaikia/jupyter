@@ -1,0 +1,1 @@
+awk '/auth_str:/ { print; getline; print "  type: spark\n  key1: value1\n  key2: value2"; next } 1' test.yaml > output.yaml
